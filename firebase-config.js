@@ -23,7 +23,6 @@ function setupRealtimeListeners() {
     db.collection('users').onSnapshot((snapshot) => {
         snapshot.docChanges().forEach((change) => {
             if (change.type === 'added' || change.type === 'modified') {
-                console.log('사용자 데이터 업데이트:', change.doc.data());
             }
         });
     });
@@ -32,7 +31,6 @@ function setupRealtimeListeners() {
     db.collection('scans').onSnapshot((snapshot) => {
         snapshot.docChanges().forEach((change) => {
             if (change.type === 'added' || change.type === 'modified') {
-                console.log('스캔 데이터 업데이트:', change.doc.data());
             }
         });
     });
@@ -41,7 +39,6 @@ function setupRealtimeListeners() {
     db.collection('posts').onSnapshot((snapshot) => {
         snapshot.docChanges().forEach((change) => {
             if (change.type === 'added' || change.type === 'modified') {
-                console.log('게시글 데이터 업데이트:', change.doc.data());
             }
         });
     });
@@ -50,16 +47,13 @@ function setupRealtimeListeners() {
 // Firebase 설정이 완료되면 이 함수를 호출하세요
 function initializeFirebase() {
     setupRealtimeListeners();
-    console.log('Firebase 초기화 완료!');
 }
 
 // 설정 확인 함수
 function checkFirebaseConfig() {
     if (firebaseConfig.apiKey === "YOUR_API_KEY") {
         console.error('❌ Firebase 설정이 완료되지 않았습니다!');
-        console.log('firebase-config.js 파일을 업데이트하세요.');
         return false;
     }
-    console.log('✅ Firebase 설정 완료!');
     return true;
 }

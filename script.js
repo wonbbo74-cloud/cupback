@@ -76,7 +76,6 @@ class CupBackAppFirebase {
 
     async register(userData) {
         try {
-            console.log('회원가입 시작:', userData.username);
             
             // 아이디 중복 확인
             const existingUsername = await this.db.collection('users')
@@ -103,7 +102,6 @@ class CupBackAppFirebase {
             const userCredential = await this.auth.createUserWithEmailAndPassword(email, userData.password);
             const firebaseAuthUid = userCredential.user.uid;
             
-            console.log('Firebase Auth 계정 생성 완료:', firebaseAuthUid);
 
             // Firestore에 사용자 정보 저장 (Firebase Auth UID를 문서 ID로 사용, 비밀번호는 제외)
             const { password, ...profile } = userData;
@@ -114,7 +112,6 @@ class CupBackAppFirebase {
             };
 
             await this.db.collection('users').doc(firebaseAuthUid).set(newUser);
-            console.log('Firestore 사용자 정보 저장 완료');
             
             this.showToast('회원가입이 완료되었습니다!', 'success');
             window.location.href = 'signup-success.html';
@@ -144,7 +141,6 @@ class CupBackAppFirebase {
         }
 
         try {
-            console.log('스캔 추가 시작:', code);
             
             // 올바른 사용자 ID 찾기
             let correctUserId = this.currentUser.uid;
@@ -162,7 +158,6 @@ class CupBackAppFirebase {
                 
                 if (!usersSnapshot.empty) {
                     correctUserId = usersSnapshot.docs[0].id;
-                    console.log('올바른 사용자 ID 찾음:', correctUserId);
                 }
             }
             
@@ -194,9 +189,7 @@ class CupBackAppFirebase {
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            console.log('새 스캔 데이터:', newScan);
             await this.db.collection('scans').add(newScan);
-            console.log('스캔 저장 완료');
             
             this.showToast('하나의 컵이 자연으로 돌아갔어요!', 'success');
             return true;
@@ -231,7 +224,6 @@ class CupBackAppFirebase {
 
     async getUserStats(userId) {
         try {
-            console.log('사용자 통계 조회 시작:', userId);
             
             // Firebase Auth UID와 Firestore 문서 ID 모두로 스캔 기록 찾기
             let scansSnapshot = await this.db.collection('scans')
@@ -248,7 +240,6 @@ class CupBackAppFirebase {
                     const userData = usersSnapshot.docs[0].data();
                     const userDocId = usersSnapshot.docs[0].id;
                     
-                    console.log('이메일로 사용자 찾음:', userDocId);
                     
                     // Firestore 문서 ID로 다시 스캔 기록 찾기
                     scansSnapshot = await this.db.collection('scans')
@@ -264,7 +255,6 @@ class CupBackAppFirebase {
             const todayCups = scans.filter(scan => scan.date === today).length;
             const totalCO2 = totalCups * 30;
             
-            console.log('사용자 통계 결과:', { totalCups, todayCups, totalCO2 });
             
             return { totalCups, todayCups, totalCO2 };
         } catch (error) {
@@ -281,19 +271,15 @@ class CupBackAppFirebase {
         }
 
         try {
-            console.log('게시글 작성 시작...');
-            console.log('현재 사용자:', this.currentUser.uid);
             
             let imageUrl = null;
             
             // 이미지 업로드
             if (file) {
-                console.log('이미지 업로드 시작:', file.name);
                 const storageRef = firebase.storage().ref();
                 const imageRef = storageRef.child(`posts/${Date.now()}_${file.name}`);
                 const snapshot = await imageRef.put(file);
                 imageUrl = await snapshot.ref.getDownloadURL();
-                console.log('이미지 업로드 완료:', imageUrl);
             }
 
             // 사용자 정보 가져오기 (Firebase Auth UID와 Firestore 문서 ID 모두 시도)
@@ -307,7 +293,6 @@ class CupBackAppFirebase {
                 
                 if (userSnapshot.exists) {
                     userData = userSnapshot.data();
-                    console.log('Firebase Auth UID로 사용자 정보 찾음:', userData);
                 } else {
                     // Firestore 문서 ID로 시도
                     const usersSnapshot = await this.db.collection('users')
@@ -316,7 +301,6 @@ class CupBackAppFirebase {
                     
                     if (!usersSnapshot.empty) {
                         userData = usersSnapshot.docs[0].data();
-                        console.log('이메일로 사용자 정보 찾음:', userData);
                     }
                 }
             } catch (userError) {
@@ -333,10 +317,8 @@ class CupBackAppFirebase {
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            console.log('새 게시글 데이터:', newPost);
 
             await this.db.collection('posts').add(newPost);
-            console.log('게시글 저장 완료');
             
             this.showToast('게시글이 등록되었습니다.', 'success');
             return true;
@@ -393,7 +375,6 @@ class CupBackAppFirebase {
     // 랭킹
     async getRankings() {
         try {
-            console.log('랭킹 데이터 조회 시작...');
             
             const usersSnapshot = await this.db.collection('users').get();
             const scansSnapshot = await this.db.collection('scans').get();
@@ -408,10 +389,6 @@ class CupBackAppFirebase {
                 ...doc.data() 
             }));
             
-            console.log('사용자 수:', users.length);
-            console.log('스캔 기록 수:', scans.length);
-            console.log('사용자 목록:', users.map(u => ({ id: u.id, nickname: u.nickname, department: u.department })));
-            console.log('스캔 기록:', scans.map(s => ({ userId: s.userId, date: s.date })));
             
             // 개인 랭킹 (Firebase Auth UID와 Firestore 문서 ID 모두 고려)
             const personalRanking = users.map(user => {
@@ -422,7 +399,6 @@ class CupBackAppFirebase {
                     scan.userId === user.email
                 );
                 
-                console.log(`사용자 ${user.nickname || user.name || '익명'}의 스캔 기록:`, userScans.length, '개');
                 
                 return { 
                     ...user, 
@@ -431,11 +407,6 @@ class CupBackAppFirebase {
                 };
             }).sort((a, b) => b.totalCups - a.totalCups);
             
-            console.log('개인 랭킹:', personalRanking.map(r => ({ 
-                nickname: r.nickname || r.name, 
-                department: r.department, 
-                totalCups: r.totalCups 
-            })));
             
             // 학과 랭킹
             const departmentStats = {};
@@ -466,7 +437,6 @@ class CupBackAppFirebase {
                 }))
                 .sort((a, b) => b.totalCups - a.totalCups);
             
-            console.log('학과 랭킹:', departmentRanking);
             
             return { personalRanking, departmentRanking };
         } catch (error) {
@@ -644,13 +614,11 @@ class CupBackAppFirebase {
             
             // 사용 가능한 카메라 목록 가져오기
             const devices = await Html5Qrcode.getCameras();
-            console.log('사용 가능한 카메라:', devices);
             
             let selectedCamera = null;
             
             // 후면 카메라 찾기 (더 정확한 검색)
             for (const device of devices) {
-                console.log('카메라 확인:', device.label, device.id);
                 const label = device.label.toLowerCase();
                 if (label.includes('back') || 
                     label.includes('rear') ||
@@ -658,7 +626,6 @@ class CupBackAppFirebase {
                     label.includes('environment') ||
                     label.includes('world')) {
                     selectedCamera = device.id;
-                    console.log('후면 카메라 선택:', device.label);
                     break;
                 }
             }
@@ -666,7 +633,6 @@ class CupBackAppFirebase {
             // 후면 카메라가 없으면 첫 번째 카메라 사용
             if (!selectedCamera && devices.length > 0) {
                 selectedCamera = devices[0].id;
-                console.log('첫 번째 카메라 선택:', devices[0].label);
             }
             
             if (!selectedCamera) {
@@ -677,20 +643,17 @@ class CupBackAppFirebase {
                 return;
             }
             
-            console.log('선택된 카메라 ID:', selectedCamera);
             
             // QR 스캐너 시작
             await html5QrCode.start(
                 selectedCamera,
                 config,
                 (decodedText) => {
-                    console.log('QR 코드 스캔 성공:', decodedText);
                     this.handleScanCode(decodedText);
                     html5QrCode.stop();
                 },
                 (errorMessage) => {
-                    // 스캔 오류는 무시 (정상적인 동작)
-                    console.log('QR 스캔 오류 (무시):', errorMessage);
+                    // 프레임마다 QR을 찾지 못하면 호출되므로 무시한다
                 }
             );
             
@@ -709,13 +672,9 @@ class CupBackAppFirebase {
 
     // QR 스캔 코드 처리
     async handleScanCode(code) {
-        console.log('원본 스캔된 QR 코드:', code);
-        console.log('원본 코드 길이:', code.length);
         
         // QR 코드 정리 (공백 제거, 대문자 변환, 줄바꿈 제거, 특수문자 제거)
         const cleanCode = code.trim().toUpperCase().replace(/[\r\n]/g, '').replace(/[^A-Z0-9\-]/g, '');
-        console.log('정리된 QR 코드:', cleanCode);
-        console.log('정리된 코드 길이:', cleanCode.length);
         
         // 유효한 QR 코드 확인 (더 유연한 매칭)
         const VALID_CODES = ['CUPBACK-2025', 'CUPBACK', 'WLFANS'];
@@ -728,7 +687,6 @@ class CupBackAppFirebase {
             if (cleanCode === validCode) {
                 isValid = true;
                 matchedCode = validCode;
-                console.log('정확한 매칭 성공:', validCode);
                 break;
             }
         }
@@ -739,7 +697,6 @@ class CupBackAppFirebase {
                 if (cleanCode.includes(validCode) || validCode.includes(cleanCode)) {
                     isValid = true;
                     matchedCode = validCode;
-                    console.log('포함 관계 매칭 성공:', validCode);
                     break;
                 }
             }
@@ -749,20 +706,10 @@ class CupBackAppFirebase {
         if (!isValid && cleanCode.includes('CUPBACK')) {
             isValid = true;
             matchedCode = 'CUPBACK-2025';
-            console.log('CUPBACK 부분 매칭 성공');
         }
-        
-        // 4. 디버깅을 위한 모든 매칭 시도 로그
-        console.log('매칭 결과:', {
-            isValid: isValid,
-            matchedCode: matchedCode,
-            cleanCode: cleanCode,
-            validCodes: VALID_CODES
-        });
         
         if (!isValid) {
             this.showToast('유효하지 않은 QR 코드입니다: ' + cleanCode, 'error');
-            console.log('QR 코드 매칭 실패 - 모든 시도 후에도 유효하지 않음');
             return false;
         }
         
@@ -807,7 +754,6 @@ class CupBackAppFirebase {
     // 개인 통계 업데이트
     async updateUserStats() {
         if (!this.currentUser) {
-            console.log('사용자가 로그인되지 않았습니다.');
             return;
         }
         
@@ -823,7 +769,6 @@ class CupBackAppFirebase {
             if (userTodayEl) userTodayEl.textContent = userStats.todayCups.toLocaleString();
             if (userCO2El) userCO2El.textContent = userStats.totalCO2.toLocaleString();
             
-            console.log('개인 통계 업데이트 완료:', userStats);
             
         } catch (error) {
             console.error('개인 통계 업데이트 오류:', error);
@@ -833,7 +778,6 @@ class CupBackAppFirebase {
     // 기여도 퍼센트 계산 및 업데이트
     async updateContributionPercentage() {
         if (!this.currentUser) {
-            console.log('사용자가 로그인되지 않았습니다.');
             return;
         }
         
@@ -851,7 +795,6 @@ class CupBackAppFirebase {
                 progressPercentageEl.textContent = percentage;
             }
             
-            console.log('기여도 계산 완료:', percentage + '%');
             
         } catch (error) {
             console.error('기여도 계산 오류:', error);
@@ -861,7 +804,6 @@ class CupBackAppFirebase {
     // 최근 활동 업데이트
     async updateRecentActivity() {
         if (!this.currentUser) {
-            console.log('사용자가 로그인되지 않았습니다.');
             return;
         }
         
@@ -885,7 +827,6 @@ class CupBackAppFirebase {
                 if (!usersSnapshot.empty) {
                     const userDocId = usersSnapshot.docs[0].id;
                     
-                    console.log('이메일로 사용자 찾음 (활동):', userDocId);
                     
                     // Firestore 문서 ID로 다시 스캔 기록 찾기
                     scansSnapshot = await this.db.collection('scans')
@@ -927,7 +868,6 @@ class CupBackAppFirebase {
                 `;
             }).join('');
             
-            console.log('최근 활동 업데이트 완료:', activities.length + '개 활동');
             
         } catch (error) {
             console.error('최근 활동 업데이트 오류:', error);
@@ -971,15 +911,11 @@ class CupBackAppFirebase {
     // 게시글 로드
     async loadPosts() {
         try {
-            console.log('게시글 로드 시작...');
             const posts = await this.getPosts();
             const postsContainer = document.getElementById('postsContainer');
             
-            console.log('로드된 게시글 수:', posts.length);
-            console.log('게시글 데이터:', posts);
             
             if (!postsContainer) {
-                console.log('postsContainer 요소를 찾을 수 없습니다.');
                 return;
             }
             
@@ -1021,7 +957,6 @@ class CupBackAppFirebase {
                 `;
             }).join('');
             
-            console.log('게시글 로드 완료');
             
         } catch (error) {
             console.error('게시글 로드 오류:', error);
@@ -1032,12 +967,10 @@ class CupBackAppFirebase {
     // 랭킹 로드
     async loadRankings() {
         try {
-            console.log('랭킹 로드 시작...');
             const rankings = await this.getRankings();
             const personalRankingEl = document.getElementById('personalRanking');
             const departmentRankingEl = document.getElementById('departmentRanking');
             
-            console.log('랭킹 데이터:', rankings);
             
             if (personalRankingEl) {
                 if (rankings.personalRanking.length === 0) {
@@ -1071,7 +1004,6 @@ class CupBackAppFirebase {
                         `;
                     }).join('');
                 }
-                console.log('개인 랭킹 업데이트 완료');
             }
             
             if (departmentRankingEl) {
@@ -1103,7 +1035,6 @@ class CupBackAppFirebase {
                         `;
                     }).join('');
                 }
-                console.log('학과 랭킹 업데이트 완료');
             }
             
         } catch (error) {
