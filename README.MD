@@ -44,8 +44,7 @@
 ```
 cupback/
 ├── index.html          # 홈페이지
-├── login.html          # 로그인 페이지
-├── signup.html         # 회원가입 페이지
+├── login.html          # 로그인·회원가입 페이지
 ├── signup-success.html # 가입 완료 페이지
 ├── scan.html           # 컵 회수 페이지
 ├── dashboard.html      # 대시보드 페이지
