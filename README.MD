@@ -46,19 +46,21 @@ cupback/
 ├── index.html          # 홈페이지
 ├── login.html          # 로그인 페이지
 ├── signup.html         # 회원가입 페이지
+├── signup-success.html # 가입 완료 페이지
 ├── scan.html           # 컵 회수 페이지
 ├── dashboard.html      # 대시보드 페이지
 ├── board.html          # 게시판 페이지
 ├── ranking.html        # 랭킹 페이지
 ├── styles.css          # 스타일시트
-├── script.js           # JavaScript 로직
+├── script.js           # JavaScript 로직 (Firebase 연동)
+├── firebase-config.js  # Firebase 프로젝트 설정
+├── SCC 기획서 최종본_팀 리커버스.pdf  # 기획서
 └── README.md           # 프로젝트 설명
 ```
 
 ### 2. 실행 방법
-1. 모든 파일을 같은 폴더에 저장
-2. `index.html` 파일을 웹 브라우저로 열기
-3. 로컬 서버 없이도 작동 (localStorage 기반)
+- 배포 사이트: https://wonbbo74-cloud.github.io/cupback/
+- 로컬에서 열 때는 VS Code Live Server 등으로 `index.html`을 실행합니다. 회원·회수 기록·게시글은 Firebase(Firestore, Authentication)에 저장됩니다.
 
 ### 3. 테스트 시나리오
 1. **회원가입** → 성공 메시지 → 로그인 페이지 이동
@@ -91,19 +93,14 @@ cupback/
 
 ## 💾 데이터 관리
 
-### localStorage 구조
+### Firebase 구조
 ```javascript
-// 사용자 정보
-users: [{ id, name, studentId, department, year, username, password }]
+// Firestore 컬렉션
+users: { name, studentId, department, year, username, email }   // 회원 정보
+scans: { userId, date, at, code }                               // 컵 회수 기록
+posts: { title, content, writer, writerId, at }                 // 게시글
 
-// 스캔 기록
-scans: [{ userId, date, at, code }]
-
-// 게시글
-posts: [{ id, title, content, writer, writerId, at }]
-
-// 세션
-session: userId (로그인 상태)
+// 로그인: Firebase Authentication
 ```
 
 ### 데이터 검증
@@ -116,16 +113,16 @@ session: userId (로그인 상태)
 ### 프론트엔드
 - **HTML5**: 시맨틱 마크업, 접근성 고려
 - **CSS3**: CSS 변수, Grid, Flexbox, 애니메이션
-- **JavaScript ES6+**: 클래스, 모듈, localStorage API
+- **JavaScript ES6+**: 클래스, 비동기(async/await)
 
-### 라이브러리
+### 라이브러리·서비스
+- **Firebase**: Firestore(데이터), Authentication(로그인)
 - **Google Fonts**: Noto Sans KR (한글 최적화)
-- **순수 JavaScript**: 외부 의존성 없음
 
 ### 브라우저 지원
 - **모던 브라우저**: Chrome, Firefox, Safari, Edge
 - **모바일 브라우저**: iOS Safari, Chrome Mobile
-- **최소 요구사항**: ES6 지원, localStorage 지원
+- **최소 요구사항**: ES6 지원
 
 ## 📱 모바일 최적화
 
@@ -142,12 +139,11 @@ session: userId (로그인 상태)
 ## 🔒 보안 고려사항
 
 ### 현재 상태 (MVP)
-- **클라이언트 사이드**: 모든 데이터가 브라우저에 저장
-- **비밀번호**: 평문 저장 (개발 단계)
+- **인증**: Firebase Authentication으로 로그인 처리
+- **데이터**: Firestore에 저장, 접근 권한은 Firestore 보안 규칙으로 관리
 
 ### 향후 개선 (실서비스)
-- **서버 인증**: JWT, 세션 기반 인증
-- **비밀번호 해시**: bcrypt, salt 적용
+- **회원 정보 정리**: Firestore 사용자 문서에서 비밀번호 필드 제거(인증은 Firebase Auth만 사용)
 - **HTTPS**: 카메라 API 사용을 위한 필수
 - **데이터 암호화**: 민감 정보 암호화
 
@@ -159,7 +155,6 @@ session: userId (로그인 상태)
 - **오프라인 지원**: Service Worker 적용
 
 ### 중기 개선
-- **Firebase 연동**: 실시간 데이터베이스
 - **푸시 알림**: 참여 독려 알림
 - **소셜 로그인**: Google, Kakao 연동
 
