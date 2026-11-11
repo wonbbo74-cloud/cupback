@@ -45,43 +45,17 @@ class CupBackAppFirebase {
     // 사용자 인증
     async login(username, password) {
         try {
-            console.log('로그인 시도:', username);
-            
-            // Firestore에서 사용자 찾기
-            const userSnapshot = await this.db.collection('users')
-                .where('username', '==', username)
-                .get();
+            // 비밀번호 확인은 Firebase Auth에 맡깁니다(Firestore에는 비밀번호를 저장하지 않음)
+            await this.auth.signInWithEmailAndPassword(username + '@cupback.com', password);
 
-            if (userSnapshot.empty) {
-                this.showToast('존재하지 않는 아이디입니다.', 'error');
-                return false;
-            }
-
-            const userData = userSnapshot.docs[0].data();
-            const userDocId = userSnapshot.docs[0].id;
-            
-            console.log('사용자 정보 찾음:', userDocId);
-            
-            // 비밀번호 확인
-            if (userData.password !== password) {
-                this.showToast('비밀번호가 틀렸습니다.', 'error');
-                return false;
-            }
-
-            // Firebase Auth로 로그인 (이메일/비밀번호 방식)
-            await this.auth.signInWithEmailAndPassword(userData.email || username + '@cupback.com', password);
-            console.log('Firebase Auth 로그인 성공');
-            
             this.showToast('로그인에 성공했습니다!', 'success');
             return true;
         } catch (error) {
             console.error('로그인 오류:', error);
             
             // Firebase Auth 오류 처리
-            if (error.code === 'auth/user-not-found') {
-                this.showToast('존재하지 않는 아이디입니다.', 'error');
-            } else if (error.code === 'auth/wrong-password') {
-                this.showToast('비밀번호가 틀렸습니다.', 'error');
+            if (['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential', 'auth/invalid-login-credentials', 'auth/invalid-email'].includes(error.code)) {
+                this.showToast('아이디 또는 비밀번호가 올바르지 않습니다.', 'error');
             } else if (error.code === 'auth/too-many-requests') {
                 this.showToast('로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.', 'error');
             } else {
@@ -131,10 +105,11 @@ class CupBackAppFirebase {
             
             console.log('Firebase Auth 계정 생성 완료:', firebaseAuthUid);
 
-            // Firestore에 사용자 정보 저장 (Firebase Auth UID를 문서 ID로 사용)
+            // Firestore에 사용자 정보 저장 (Firebase Auth UID를 문서 ID로 사용, 비밀번호는 제외)
+            const { password, ...profile } = userData;
             const newUser = {
                 email: email,
-                ...userData,
+                ...profile,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
