@@ -139,11 +139,10 @@ posts: { title, content, writer, writerId, at }                 // 게시글
 ## 🔒 보안 고려사항
 
 ### 현재 상태 (MVP)
-- **인증**: Firebase Authentication으로 로그인 처리
+- **인증**: Firebase Authentication으로 로그인 처리, 비밀번호는 Firestore에 저장하지 않음
 - **데이터**: Firestore에 저장, 접근 권한은 Firestore 보안 규칙으로 관리
 
 ### 향후 개선 (실서비스)
-- **회원 정보 정리**: Firestore 사용자 문서에서 비밀번호 필드 제거(인증은 Firebase Auth만 사용)
 - **HTTPS**: 카메라 API 사용을 위한 필수
 - **데이터 암호화**: 민감 정보 암호화
 
